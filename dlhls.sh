@@ -1,4 +1,4 @@
-MAX_FILE_PER_STREAM=10
+MAX_FILE_PER_STREAM=100000000
 
 function remove_nonexisting {
     if [ -z $1 ]||[ $1 == --help ]||[ ! -e $1 ]; then
@@ -11,7 +11,7 @@ function remove_nonexisting {
     sed -e '/^#EXTINF/ { N; s_\n_%%%_; }' $fileToModify > tmp_pl.txt
 
     #remove lines of non-existing streams in tmp_pl.txt
-    lastExtInf=`tail -n 10 -r tmp_pl.txt | sed -n -e '/%%%/{ p; q; }'`
+    lastExtInf=`tail -n 15000 -r tmp_pl.txt | sed -n -e '/%%%/{ p; q; }'`
     #most of lines are #EXTINF:2.0,%%%1479853/471060000.ts
     while read line; do
         if [[ $line == *"%%%"* ]]; then
@@ -34,7 +34,7 @@ _' tmp_pl.txt
 }
 
 #set -x
-URL=http://static.france24.com/live/F24_EN_LO_HLS/live_ios.m3u8
+URL="https://mn-nl.mncdn.com/blutv_haberturk/haberturk_sd.smil/playlist.m3u8?DVR"
 DOMAIN=$(echo $URL | awk -F/ '{print $3}')
 #THEIP=$(dig +short $DOMAIN)
 #THEIP=201.6.17.245
@@ -53,7 +53,7 @@ if [ -s $LOCAL_MANIFEST ] && [ -s all_playlists.txt ]; then
   echo -e "$LOCAL_MANIFEST: Already exists. skiping.\n\n"
 else
   echo -e "\n\n###--- Downloading master manifest from $URL2 ---"
-  wget $URL2 $HOST_HDR -O $LOCAL_MANIFEST
+  wget $URL2 $HOST_HDR -O $LOCAL_MANIFEST --no-check-certificate
   if [ ! $? == 0 ]||[ ! -s $LOCAL_MANIFEST ]; then
     echo ">>>> Error downloading manifest <<<<"
     exit 2
@@ -78,7 +78,7 @@ while read playList; do
 
   echo -e "\n\n###--- Downloading playlist $PL_URL"
   TSL=${FOLDER}_TSList.txt
-  wget $PL_URL -O $LOCAL_PL 
+  wget $PL_URL -O $LOCAL_PL --no-check-certificate
   if [ ! $? == 0 ]||[ ! -s $LOCAL_PL ]; then
     echo "###>>>> Error downloading playlist file <<<<"
   else
@@ -97,20 +97,20 @@ while read playList; do
       TS_NAME=$URLPREF/$FOLDER/$ts
     fi
     LOCAL_TS=$FOLDER/$ts
-    FOLDER2=$(dirname $LOCAL_TS) 
+    FOLDER2=$(dirname $LOCAL_TS)
     mkdir -p $FOLDER2 2> /dev/null
     echo $TS_NAME
     if [ -s $LOCAL_TS ]; then
       echo "Already exists. skiping."
     else
       echo -e "\n\n###--- Downloading TS from $TS_NAME"
-      wget $TS_NAME -O $LOCAL_TS
+      wget $TS_NAME -O $LOCAL_TS --no-check-certificate
       if [ ! $? == 0 ]||[ ! -s $LOCAL_TS ]; then
         echo "###>>>> Error downloading TS file <<<<"
       else
         echo -e "###--- TS downloaded ---\n\n"
       fi
-    
+
     fi
   done < $TSL
   rm $TSL
@@ -118,4 +118,3 @@ while read playList; do
 done < all_playlists.txt
 rm all_playlists.txt
 find . -name Thumbs.db -exec rm {} \;
-
